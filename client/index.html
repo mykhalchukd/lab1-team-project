@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Каталог Товарів</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .product-list { list-style-type: none; padding: 0; }
+        .product-item { 
+            border: 1px solid #ccc; 
+            margin-bottom: 10px; 
+            padding: 15px; 
+            border-radius: 5px;
+        }
+        .product-item strong { color: #007bff; }
+    </style>
+</head>
+<body>
+    <h1>Каталог Товарів</h1>
+    <button onclick="loadItems()">Load Items from Backend</button>
+    
+    <ul id="items-list" class="product-list">
+        <li>Натисніть кнопку, щоб завантажити товари...</li>
+    </ul>
+
+    <script>
+        const API_URL = 'http://localhost:3000/items'; // Порт бекенду
+
+        async function loadItems() {
+            const list = document.getElementById('items-list');
+            list.innerHTML = '<li>Завантаження...</li>';
+            
+            try {
+                // 1. Виклик API бекенду
+                const response = await fetch(API_URL);
+                const result = await response.json();
+
+                if (result.message === 'success') {
+                    // 2. Очищення та відображення даних у вигляді списку
+                    list.innerHTML = ''; 
+                    
+                    if (result.data.length === 0) {
+                        list.innerHTML = '<li>Каталог порожній.</li>';
+                        return;
+                    }
+
+                    result.data.forEach(item => {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'product-item';
+                        listItem.innerHTML = 
+                            `ID: ${item.id}<br>` +
+                            `<strong>${item.name}</strong><br>` +
+                            `Ціна: ${item.price} грн.`;
+                        list.appendChild(listItem);
+                    });
+                } else {
+                    alert('Помилка API: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                alert('Не вдалося підключитися до бекенду. Перевірте, чи запущено сервер на http://localhost:3000');
+                list.innerHTML = '<li>Помилка підключення до сервера.</li>';
+            }
+        }
+    </script>
+</body>
+</html>
