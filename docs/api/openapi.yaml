@@ -1,0 +1,194 @@
+openapi: 3.0.3
+info:
+  title: Product Catalog API
+  version: 1.0.0
+  description: API для керування товарами в контексті "Каталог".
+
+servers:
+  - url: /api/v1
+    description: Development server
+
+paths:
+  /items:
+    # 1. POST /items (Створення Товару)
+    post:
+      summary: Створити новий товар
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemCreateRequest'
+      responses:
+        '201':
+          description: Товар успішно створено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemResponse'
+        '400':
+          description: Некоректні вхідні дані
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    # 2. GET /items (Список Товарів)
+    get:
+      summary: Отримати список усіх товарів
+      responses:
+        '200':
+          description: Успішне отримання списку
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ItemResponse'
+  
+  /items/{itemId}:
+    parameters:
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Унікальний ID товару
+        
+    # 3. GET /items/{id} (Деталі Товару)
+    get:
+      summary: Отримати деталі товару за ID
+      responses:
+        '200':
+          description: Успішне отримання деталей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemResponse'
+        '404':
+          description: Товар не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    # 4. PUT /items/{id} (Повне Оновлення)
+    put:
+      summary: Повне оновлення товару
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemUpdateRequest'
+      responses:
+        '200':
+          description: Товар успішно оновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemResponse'
+        '400':
+          description: Некоректні вхідні дані
+        '404':
+          description: Товар не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                
+    # 5. DELETE /items/{id} (Видалення)
+    delete:
+      summary: Видалити товар
+      responses:
+        '204':
+          description: Успішне видалення (без вмісту)
+        '404':
+          description: Товар не знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+components:
+  schemas:
+    # ------------------ DTO ------------------
+    ItemCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Ноутбук Dell XPS
+          description: Назва товару
+        price:
+          type: number
+          format: float
+          example: 1599.99
+          description: Ціна товару
+        description:
+          type: string
+          example: Надлегкий ноутбук з процесором i7.
+      required:
+        - name
+        - price
+
+    ItemUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/ItemCreateRequest'
+      
+    ItemResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: f1e2d3c4-b5a6-7890-1234-567890abcdef
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - price
+        
+    # ------------------ Error DTO ------------------
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: ValidationError
+          description: Загальний тип помилки
+        code:
+          type: string
+          example: PRICE_REQUIRED
+          description: Внутрішній код помилки
+        message:
+          type: string
+          example: Price field cannot be empty or zero.
+          description: Повідомлення для розробника
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+      required:
+        - error
+        - code
+        - message
